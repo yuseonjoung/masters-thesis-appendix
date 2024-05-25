@@ -2,7 +2,7 @@ This repository provides supplemental information to the analyses in the master'
 
 The six folders in this repository contain the following contents: 
 
-1. Data cleaning urban-rural classification - Python </br>
+**1. Data cleaning urban-rural classification - Python** </br>
    This folder includes the Python Jupyter Notebook for combining the three datasets into one dataset: 1) NUTS ID and region name, 2) urban-rural classification, and 3) postal code.
    The first notebook named 'data_cleaning_urban_classification_oecd' merges the datasets with OECD classification. The second one named 'data_cleaning_urban_classification_RLK_KTU' merges the datasets with BBRS classification.
    
