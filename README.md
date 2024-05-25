@@ -12,7 +12,7 @@ The first notebook named 'data_cleaning_urban_classification_oecd' merges the da
 **2. Data cleaning for regression analysis - Python** 
 
 This folder includes the Python Jupyter Notebook for combining the three batches of survey data and cleaning the dataset for R regression analysis. The folder 'data' includes the three batches of the original responses from the survey.
-In detail, this notebook does the following data-cleaning tasks: \
+In detail, this notebook does the following data-cleaning tasks: 
 
       - It cleans the education columns so that only the highest level of education remains.
       - It maps the urban-rural classification with the postal code from the responses.
