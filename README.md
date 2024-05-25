@@ -1,5 +1,5 @@
 This repository provides supplemental information to the analyses in the master's thesis "Household Carbon Footprints and  Consumers’ Carbon Beliefs in Germany:  Analysis using Multivariate Regression and K-Prototype Clustering" submitted to the TUM School of Life Sciences for obtaining the degree of the Master of Science in Sustainable Resource Management. 
-<be>
+<br/>
 <br>
 The six folders in this repository contain the following contents: 
 
