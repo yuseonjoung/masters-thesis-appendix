@@ -1,0 +1,764 @@
+---
+title: "Regression_Analysis_Total"
+output: html_document
+date: "2024-01-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+### import libraries
+
+library(car)
+library(MASS)
+library(dplyr)
+library(tidyr)
+library(fastDummies)
+library(lubridate)
+library(coefplot)
+library(ggplot2)
+library(leaps)
+
+```
+
+
+### Loading the data 
+
+```{r}
+df = read.csv("data_cleaned_R_final.csv", head = TRUE)
+
+head(df, 10)
+
+```
+
+```{r}
+# The total number of data points in the dataset
+
+nrow(df)
+```
+
+```{r}
+unique(df$RLK2022)
+```
+
+
+
+### Hypotheses for the regression model
+
+#### 1. The first dependent variable: actual CO2 emission
+
+H1a: age makes differences in the actual CO2 emission from everyday activity.  
+H1b: income makes differences in the actual CO2 emission from everyday activity.   
+H1c: education level makes differences in the actual CO2 emission from everyday activity.  
+H1d: the place of residence (city or countryside) in the actual CO2 emission from every day activity. 
+H1e: the region (the federal state) makes differences in the actual CO2 emission from everyday activity.  
+H1f: the political party that the respondent supports makes differences in the actual CO2 emission from everyday activity.  
+
+#### 2. The second dependent variable: cons
+
+H2a: age makes differences in the consumers’ belief about CO2 emission from everyday activity.  
+H2b: income makes differences in the consumers’ belief about CO2 emission from everyday activity.   
+H2c: education level makes differences in the consumers’ belief about CO2 emission from everyday activity.  
+H2d: the place of residence (city or countryside) makes differences in the consumers’ belief about CO2 emission from everyday activity.  
+H2e: the region (the federal state) makes differences in the consumers’ belief about CO2 emission from everyday activity.  
+H2f: the political party that the respondent supports makes differences in the consumers’ belief about CO2 emission from everyday activity.  
+
+
+### Independent variables in the dataset
+
+1. age: age, numerical variable
+2. income: monthly net income in Euro, numerical variable, less than 10,000 EUR only (outliers removed)
+3. education: categorical variable
+4. urban_rural_class: categorical variable, based on RLK 2022 classification
+5. federal_state: federal state, categorical variable
+6. political_party: political party, categorical variable 
+
+
+### Dependent variables in the dataset 
+
+1. Actual CO2 from housing, electricity, mobility, food, other consumption
+  1) CO2_housing_electricity
+  2) CO2_mobility
+  3) CO2_food
+  4) CO2_other_consumption
+  5) CO2_total
+
+  
+2. Belief about CO2
+  1) belief_diff_housing_electricity
+  2) belief_diff_mobility
+  3) belief_diff_food
+  4) belief_diff_other_consumption
+  5) belief_diff_total
+
+
+### Data preparation
+
+```{r}
+# change into categorical variable
+
+df$education <-as.factor(df$education)
+df$EUROSTAT <-as.factor(df$EUROSTAT)
+df$RLK2022 <-as.factor(df$RLK2022)
+df$KTU2022 <-as.factor(df$KTU2022)
+df$political_party <-as.factor(df$political_party)
+df$federal_state <-as.factor(df$federal_state)
+```
+
+
+```{r}
+## Select the classification for the urban_rural
+
+#df1_1<-  subset(df, select = -c(KTU2022, RLK2022) #EUROSTATS
+
+df1_1<-  subset(df, select = -c(KTU2022, EUROSTAT)) #RLK2022 is selected 
+
+#df1_1<-  subset(df, select = -c(RLK2022, EUROSTAT)) #KTU2022
+
+names(df1_1)[names(df1_1) == 'RLK2022'] <- 'urban_rural_class'  #change the variable name!!
+
+head(df1_1)
+```
+
+
+
+
+
+```{r}
+
+# Independent variables: age, income, political_party, education, urban_rural, federal_state
+# Dependent variables: CO2_total
+
+
+df1 <- as_tibble(df1_1)
+head(df1)
+
+df1 <- df1 %>% select(2, 3, 4, 5, 6, 7, 24) #10, 20, 21, 22, 24
+
+df1
+
+```
+
+```{r}
+
+# Independent variables: age, income, political_party, education, urban_rural, federal_state
+# Dependent variables: belief_diff_total
+
+
+df2 <- as_tibble(df1_1)
+
+head(df1_1)
+
+df2 <- df2 %>% select(2, 3, 4, 5, 6, 7, 29) #25, 26, 27, 28, 29
+
+df2
+
+
+```
+
+
+### I. Exploratory Data Analysis 
+
+
+Check the Jupytor notebook: EDA_scatter_plot_actual_belief
+
+
+### II. Multivariate Regression: CO2 total
+
+#### 1. Modeling
+
+```{r}
+# Checking the possible correlation in the data 
+
+plot(df1[1:6])
+
+```
+
+
+We can see that there is some level of positive correlation between age and income variables. 
+
+
+```{r}
+# Checking the number of variables to find the ones with the highest number
+
+table(df1$political_party)
+table(df1$education)
+table(df1$urban_rural_class)
+table(df1$federal_state)
+
+```
+
+
+```{r}
+
+## defining reference levels according to the values with the highest frequency 
+
+df1$political_party  <- relevel(df1$political_party, ref='Bündnis 90/Die Grünen')
+df1$education  <- relevel(df1$education, ref='(Fach-) Hochschulabschluss (Bachelor, Master, Magister, Diplom, Staatsexamen)')
+df1$urban_rural_class  <- relevel(df1$urban_rural_class, ref='sehr zentral')
+df1$federal_state  <- relevel(df1$federal_state, ref='Nordrhein-Westfalen')
+
+```
+
+
+
+```{r}
+# regression model with all variables, non-scaled dataset
+
+model1 <- lm(CO2_total ~ age + income + political_party + education +  urban_rural_class + federal_state, data = df1)
+
+summary(model1) 
+
+```
+
+
+```{r}
+# Checking the VIFs for multicollinearity 
+
+vif(model1)
+
+```
+
+
+```{r}
+# threshold for multicollinearity 
+# Calculating the threshold
+
+max(10, 1/(1-summary(model1)$r.square))
+
+```
+
+
+```{r}
+
+# Checking the outliers: estimate of the influence of data point; summary of how much a regression model changes when the ith observation is removed
+
+cook = cooks.distance(model1)
+plot(cook,
+     type="h",
+     lwd=3,
+     ylab = "Cook's Distance",
+     main="Cook's Distance")
+abline(h = 1)
+
+
+influential = cooks.distance(model1)[which(cook > 3*mean(cook, na.rm=TRUE))]
+influential
+
+influential = influential[!is.na(influential)]
+influential_vector = c(as.numeric(rownames(data.frame(influential))))
+
+
+df1[influential_vector, ]
+
+```
+
+
+#### 2. Assumptions check in the residuals 
+
+
+```{r}
+plot(model1)
+```
+
+
+
+
+```{r}
+
+res1 = stdres(model1) ## (Standardized) Residuals
+
+# Linearity assumption/Mean zero assumption: violated
+
+plot(df1$age, res1, xlab = "Age", ylab = "Residuals")
+abline(h = 0)
+
+plot(df1$income, res1, xlab = "Income", ylab = "Residuals")
+abline(h = 0)
+
+plot(df1$urban_rural_class, res1, xlab = "urban_rural_class", ylab = "Residuals")
+abline(h = 0)
+
+plot(df1$education, res1, xlab = "education", ylab = "Residuals")
+abline(h = 0)
+
+plot(df1$federal_state, res1, xlab = "federal_state", ylab = "Residuals")
+abline(h = 0)
+
+plot(df1$political_party, res1, xlab = "Political Party", ylab = "Residuals")
+abline(h = 0)
+
+```
+
+
+```{r}
+# Constant variance and independent error term assumption: violated
+
+plot(fitted(model1), res1, xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0)
+```
+
+
+```{r}
+# Normality assumption : violated
+
+hist(res1, xlab="Residuals", main= "Histogram of Residuals")
+
+```
+
+
+
+
+#### 3. Variable Selection 
+
+
+```{r}
+
+### Backward regression using AIC: starting with all of the variables
+### Final model: CO2_total ~ income + political_party
+
+step_model1 <- stepAIC(model1, trace=TRUE, direction= "backward")
+summary(step_model1)
+
+```
+
+
+```{r}
+plot(step_model1)
+```
+
+```{r}
+res1 = stdres(step_model1) ## (Standardized) Residuals
+
+# Linearity assumption/Mean zero assumption: violated
+
+#plot(df1_scaled$age, res1, xlab = "Age", ylab = "Residuals")
+#abline(h = 0)
+
+plot(df1$income, res1, xlab = "Income", ylab = "Residuals")
+abline(h = 0)
+
+#plot(df1_scaled$urban_rural_class, res1, xlab = "urban_rural_class", ylab = "Residuals")
+#abline(h = 0)
+
+#Rplot(df1_scaled$education, res1, xlab = "education", ylab = "Residuals")
+#abline(h = 0)
+
+#plot(df1_scaled$federal_state, res1, xlab = "federal_state", ylab = "Residuals")
+#abline(h = 0)
+
+plot(df1$political_party, res1, xlab = "Political Party", ylab = "Residuals")
+abline(h = 0)
+
+```
+
+
+
+```{r}
+# Constant variance and independent error term assumption: violated
+
+plot(fitted(step_model1), res1, xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0)
+
+```
+
+
+```{r}
+# Normality assumption: violated
+
+hist(res1, xlab="Residuals", main= "Histogram of Residuals")
+```
+
+
+
+#### 4. Improving the regression fit
+
+
+```{r}
+
+bc = boxCox(step_model1)
+opt.lambda = bc$x[which.max(bc$y)]
+round(opt.lambda/0.5)*0.5 # round it to the nearest 0.5
+
+```
+
+#### FINAL MODEL
+
+Here is the final model for CO2 total and the selected independent variables: 
+
+```{r}
+
+# transform the y variables y = y^(-0.5)
+
+options(scipen = 0, digits=2)
+
+model1_trans <- lm(1/sqrt(CO2_total) ~ income + political_party, data = df1)
+
+summary(model1_trans)
+
+```
+
+
+
+```{r}
+# Checking the VIFs for multicollinearity 
+
+vif(model1_trans)
+
+```
+
+
+
+```{r}
+# threshold for multicollinearity 
+# Calculating the threshold
+
+max(10, 1/(1-summary(model1_trans)$r.square))
+
+```
+
+
+```{r}
+# Checking outliers: estimate of the influence of data point; summary of how much a regression model changes when the ith observation is removed
+
+cook = cooks.distance(model1_trans)
+plot(cook,
+     type="h",
+     lwd=3,
+     ylab = "Cook's Distance",
+     main="Cook's Distance")
+abline(h = 1)
+
+influential = cooks.distance(model1_trans)[which(cook >1)]
+
+influential
+```
+
+
+
+#### 5. Assumptions check in the residuals of the transformed regression
+
+```{r}
+plot(model1_trans)
+```
+
+
+
+```{r}
+
+res1 = stdres(model1_trans) ## (Standardized) Residuals
+
+# Linearity assumption/Mean zero assumption
+
+#plot(df1$age, res1, xlab = "Age", ylab = "Residuals")
+#abline(h = 0)
+
+plot(df1$income, res1, xlab = "Income", ylab = "Residuals")
+abline(h = 0)
+
+#plot(df1$urban_rural_class, res1, xlab = "urban_rural_class", ylab = "Residuals")
+#abline(h = 0)
+
+#plot(df1$education, res1, xlab = "education", ylab = "Residuals")
+#abline(h = 0)
+
+#plot(df1$federal_state, res1, xlab = "federal_state", ylab = "Residuals")
+#abline(h = 0)
+
+plot(df1$political_party, res1, xlab = "Political Party", ylab = "Residuals")
+abline(h = 0)
+
+```
+
+```{r}
+# Durbin-Watson Test
+# Independence of the error terms 
+# H0 (null hypothesis): There is no correlation among the residuals
+# Fail to reject
+
+durbinWatsonTest(model1_trans)
+
+```
+
+
+```{r}
+# Constant variance and independent error term assumption
+
+plot(fitted(model1_trans), res1, xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0)
+```
+
+
+```{r}
+# Breusch-Pagan TEST 
+# Heteroscedasticity, constant error terms
+# H0: Homoscedasticity is present
+# Reject H0
+
+library(lmtest)
+bptest(model1_trans)
+```
+
+
+```{r}
+# Normality assumption 
+
+hist(res1, xlab="Residuals", main= "Histogram of Residuals")
+
+```
+
+
+```{r}
+# Normality test using Shapiro-test: reject the H0 
+# H0: the sample comes from a normal distribution
+# Reject H0
+
+res1_num = res1[is.finite(res1)]
+shapiro.test(res1_num)
+
+```
+
+
+### III. Multivariate Regression: belief diff total
+
+#### 1. Modeling
+
+```{r}
+# Checking the possible correlation in the data 
+
+plot(df2[1:6])
+
+```
+
+
+
+```{r}
+
+## defining a reference level
+
+df2$political_party  <- relevel(df2$political_party, ref='Bündnis 90/Die Grünen')
+df2$education  <- relevel(df2$education, ref='(Fach-) Hochschulabschluss (Bachelor, Master, Magister, Diplom, Staatsexamen)')
+df2$urban_rural_class  <- relevel(df2$urban_rural_class, ref='sehr zentral')
+df2$federal_state  <- relevel(df2$federal_state, ref='Nordrhein-Westfalen')
+
+
+```
+
+
+
+```{r}
+# regression model
+
+model2 <- lm(belief_diff_total ~ age + income + political_party + education +  urban_rural_class +federal_state , data = df2)
+summary(model2) 
+
+```
+
+
+```{r}
+# Checking the VIFs for multicollinearity: federal_state variable should be removed 
+
+vif(model2)
+
+```
+
+
+```{r}
+# threshold for multicollinearity 
+# Calculating the threshold
+
+max(10, 1/(1-summary(model2)$r.square))
+```
+
+
+```{r}
+# Checking the outliers 
+
+cook = cooks.distance(model2)
+plot(cook,
+     type="h",
+     lwd=3,
+     ylab = "Cook's Distance",
+     main="Cook's Distance")
+abline(h = 1)
+
+influential = cooks.distance(model2)[which(cook >3*mean(cook, na.rm=TRUE))]
+influential
+
+influential = influential[!is.na(influential)]
+influential_vector = c(as.numeric(rownames(data.frame(influential))))
+
+
+#df2_no_outliers = df2_scaled[-influential_vector, ]
+
+df2[influential_vector, ]
+
+```
+
+
+#### 2. Assumptions check in the residuals 
+
+
+```{r}
+
+res2 = stdres(model2) ## (Standardized) Residuals
+
+# Linearity assumption/Mean zero assumption
+
+plot(df2$age, res2, xlab = "Age", ylab = "Residuals")
+abline(h = 0)
+
+plot(df2$income, res2, xlab = "Income", ylab = "Residuals")
+abline(h = 0)
+
+plot(df2$urban_rural_class, res2, xlab = "urban_rural_class", ylab = "Residuals")
+abline(h = 0)
+
+plot(df2$education, res2, xlab = "education", ylab = "Residuals")
+abline(h = 0)
+
+plot(df2$federal_state, res2, xlab = "federal_state", ylab = "Residuals")
+abline(h = 0)
+
+plot(df2$political_party, res2, xlab = "Political Party", ylab = "Residuals")
+abline(h = 0)
+
+```
+
+
+```{r}
+# Constant variance and independent error term assumption
+
+plot(fitted(model2), res2, xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0)
+```
+
+
+```{r}
+# Durbin-Watson Test:  Independence of the error terms 
+# H0 (null hypothesis): There is no correlation among the residuals
+
+durbinWatsonTest(model2)
+```
+
+
+
+```{r}
+# Breusch-Pagan TEST: Heteroscedasticity 
+# H0: Homoscedasticity is present
+
+bptest(model2)
+```
+
+
+```{r}
+# Normality assumption 
+
+hist(res2, xlab="Residuals", main= "Histogram of Residuals")
+
+```
+
+
+```{r}
+## normality test using shapiro-test: reject the H0 
+#H0:  the sample comes from a normal distribution
+
+res2_num = res2[is.finite(res2)]
+
+shapiro.test(res2_num)
+```
+
+
+
+#### FINAL MODEL
+
+#### 3. Variable Selection, model outcome and assumption check 
+ 
+
+```{r}
+
+### Backward regression using AIC: starting with all of the variables
+
+step_model2 <- stepAIC(model2, trace=TRUE, direction= "backward")
+summary(step_model2)
+
+```
+
+
+```{r}
+
+plot(step_model2)
+
+```
+
+```{r}
+res2 = stdres(step_model2) ## (Standardized) Residuals
+
+# Linearity assumption/Mean zero assumption
+
+#plot(df1$age, res1, xlab = "Age", ylab = "Residuals")
+#abline(h = 0)
+
+plot(df2$income, res1, xlab = "Income", ylab = "Residuals")
+abline(h = 0)
+
+#plot(df1$urban_rural_class, res1, xlab = "urban_rural_class", ylab = "Residuals")
+#abline(h = 0)
+
+#plot(df1_new$education, res1, xlab = "education", ylab = "Residuals")
+#abline(h = 0)
+
+#plot(df1_new$federal_state, res1, xlab = "federal_state", ylab = "Residuals")
+#abline(h = 0)
+
+#plot(df1_new$political_party, res1, xlab = "Political Party", ylab = "Residuals")
+#abline(h = 0)
+
+```
+
+```{r}
+# Durbin-Watson Test: independence of the error terms 
+# H0 (null hypothesis): There is no correlation among the residuals
+
+durbinWatsonTest(step_model2)
+
+```
+
+
+```{r}
+# Breusch-Pagan TEST: Heteroscedasticity 
+# H0: Homoscedasticity is present
+
+bptest(step_model2)
+
+```
+
+
+```{r}
+# Constant variance and independent error term assumption
+
+plot(fitted(step_model2), res2, xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0)
+
+```
+
+
+```{r}
+# Normality assumption 
+
+hist(res2, xlab="Residuals", main= "Histogram of Residuals")
+```
+
+```{r}
+## normality test using shapiro-test: reject the H0 
+#H0:  the sample comes from a normal distribution
+
+res2_num = res2[is.finite(res2)]
+
+shapiro.test(res2_num)
+```
+
+
