@@ -37,8 +37,9 @@ This folder contains the R scripts for the regression modeling across the four c
 **6. Clustering analysis - Python** 
 
 This folder contains the Python Jupyter Notebook for clustering analysis with the detailed steps and code for UMAP, K-Prototype, LGBM, and SHAP values. 
-
-
+\
+\
+\
 Downloading the folder is sufficient for running the code. The folder contains the dataset and the code to load the dataset is written in a relative path. 
 Each Jupyter notebook and R markdown accompany the PDF version as well. 
 
