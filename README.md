@@ -2,7 +2,7 @@ This repository provides supplemental information to the analyses in the master'
 \
 \
 \
-The six folders in this repository contain the following contents: 
+The seven folders in this repository contain the following contents: 
 
 **1. Data cleaning urban-rural classification - Python** 
 
