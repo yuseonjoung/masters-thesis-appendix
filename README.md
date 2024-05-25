@@ -1,2 +1,5 @@
-# masters-thesis-appendix
-Supplemental information to the analyses in my master's thesis 
+This repository provides supplemental information to the analyses in the master's thesis "TITLE". 
+
+The six folders in this repository containing following contents: 
+
+
