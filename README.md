@@ -38,6 +38,12 @@ This folder contains the R scripts for the regression modeling across the four c
 **6. Clustering analysis - Python** 
 
 This folder contains the Python Jupyter Notebook for clustering analysis with the detailed steps and code for UMAP, K-Prototype, LGBM, and SHAP values. 
+
+**7. Survey Questionnaire**
+
+This folder includes a PDF file of the survey questionnaire. As it is the later version of the questionnaire, questions asking the estimated rank of the carbon footprint has changed from the ones used in this thesis. 
+In the attachment, the questions ask how many people have lower carbon footprints than the respondent in a group of 100. 
+However, in the questionnaires used for this thesis, it asks how many people have higher carbon footprints than the respondent in a group of 100. 
 \
 \
 \
